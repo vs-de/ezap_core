@@ -10,3 +10,4 @@ require 'hirb'
 
 $: << '.'
 require "#{ENV['EZAP_ROOT'] || '.'}/lib/init_file"
+extend Ezap::DirectZeroExtension

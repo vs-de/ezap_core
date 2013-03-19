@@ -1,7 +1,7 @@
 module Ezap::DirectZeroExtension
   def make_socket type
     type = ZMQ.const_get(type.to_s.upcase) unless type.is_a? Fixnum
-    (@socks ||= []) << (sock = Ezap::ZmqCtx.socket(type))
+    (@socks ||= []) << (sock = Ezap::ZmqCtx().socket(type))
     sock
   end
 

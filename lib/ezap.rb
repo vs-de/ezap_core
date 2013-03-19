@@ -46,5 +46,8 @@ module Ezap
   require 'ezap/global_master_connection'
   require 'ezap/sub_listener'
   require 'ezap/publisher'
+  require 'ezap/service'
+  require 'ezap/service/master'
+  require 'ezap/service/global_master'
   #require 'ezap/web_controller'
 end
