@@ -44,6 +44,7 @@ module Ezap
   require 'ezap/direct_zero_extension'
   require 'ezap/wrapped_zero_extension'
   require 'ezap/global_master_connection'
+  require 'ezap/app_config'
   require 'ezap/sub_listener'
   require 'ezap/publisher'
   require 'ezap/service'
