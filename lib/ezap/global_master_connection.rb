@@ -23,16 +23,20 @@ module Ezap
 =end
 
   module GlobalMasterConnection
+    
     def gm_request *args
       gm_addr = Ezap.config.global_master_address
-      sock = make_socket(:req)
-      sock.connect(gm_addr)
+      @__gm_sock ||= make_socket(:req)
+      @__gm_sock.connect(gm_addr)
       #puts "sending gm"
-      sock.send_obj(args)
+      @__gm_sock.send_obj(args)
       #puts "receiving gm"
-      asw = sock.recv_obj
-      sock.close
+      asw = @__gm_sock.recv_obj
       asw
+    end
+
+    def gm_close
+      @__gm_sock && @__gm_sock.close
     end
   
     #TODO: again ;)

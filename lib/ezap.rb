@@ -23,6 +23,7 @@ module Ezap
 
   #order matters here 
   load_lib_dir '../ruby_ext'
+  require 'ezap/app_config'
   load_lib 'config'
   @@config = Config.new
 
@@ -30,25 +31,15 @@ module Ezap
     @@config
   end
 
-  #load_lib 'base'
-  #load_lib 'zmq_ctx'
-  #load_lib 'sock'
-  #load_lib 'direct_zero_extension'
-  #load_lib 'wrapped_zero_extension'
-  #load_lib 'sub_listener'
-  #load_lib 'global_master_connection'
-  #load_lib 'web_controller'
   require 'ezap/base'
   require 'ezap/zmq_ctx'
   require 'ezap/sock'
   require 'ezap/direct_zero_extension'
   require 'ezap/wrapped_zero_extension'
   require 'ezap/global_master_connection'
-  require 'ezap/app_config'
   require 'ezap/sub_listener'
   require 'ezap/publisher'
   require 'ezap/service'
   require 'ezap/service/master'
   require 'ezap/service/global_master'
-  #require 'ezap/web_controller'
 end

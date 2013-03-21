@@ -22,8 +22,8 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     attr_accessor :state, :services
   end
 
-  PID_FILE=File.join(Ezap.config.root, 'var', 'pids', 'global_master.pid')
-  LOG_FILE=File.join(Ezap.config.root, 'log', 'global_master.log')
+  PID_FILE=File.join(Ezap.config.gm_root, 'var', 'pids', 'global_master.pid')
+  LOG_FILE=File.join(Ezap.config.gm_root, 'log', 'global_master.log')
 
   #TODO: 
   #     1) use a logger object
