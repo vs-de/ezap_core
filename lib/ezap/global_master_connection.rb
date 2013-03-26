@@ -38,12 +38,88 @@ module Ezap
     def gm_close
       @__gm_sock && @__gm_sock.close
     end
-  
-    #TODO: again ;)
-    def gm_ping
-      p = ZMQ::Poller.new
-      gm_addr = Ezap.config.global_master_address
+
+
+    def obj_req_ping addr, _sleep=0.01
+      
     end
+
+    def verbose_obj_req_ping addr, _sleep=0.01
+      counter = 0
+      sock = make_socket(:req)
+      sock.connect(addr)
+      p = ZMQ::Poller.new
+      p.register(sock.zs)
+      #possibly unnecessary
+=begin
+      p.poll_nonblock
+      unless p.writables.size == 1
+        puts "no writable after poll"
+        return false
+      end
+=end
+      ret = sock.send_obj([:ping], ZMQ::NonBlocking)
+      unless ZMQ::Util.resultcode_ok?(ret)
+        puts "send ret: #{ret}"
+        puts ZMQ::Util.error_string
+      end
+      sleep _sleep
+      p.poll_nonblock
+      unless p.readables.size == 1
+        puts "no readables after poll"
+        sock.setsockopt(ZMQ::LINGER, 0)
+        sock.close
+        return false
+      end
+      asw = ''
+      ret = sock.zs.recv_string(asw, ZMQ::NonBlocking)
+      unless ZMQ::Util.resultcode_ok?(ret)
+        puts "recv ret: #{ret}"
+        puts ZMQ::Util.error_string
+      end
+      return counter, asw
+    end
+  
+    def verbose_gm_ping
+      verbose_obj_req_ping Ezap.config.global_master_address
+    end
+
+    def gm_ping
+      sock = make_socket(:req)
+      sock.connect(Ezap.config.global_master_address)
+      sock.ping
+    end
+#doesn't work as expected in case of rep down
+#see zmq doc
+=begin
+    def obj_req_ping addr
+      counter = -2
+      p = ZMQ::Poller.new
+      sock = make_socket(:req)
+      sock.connect(addr)
+      p.register(sock.zs)
+      p.poll_nonblock
+      puts p.writables.inspect
+      puts p.readables.inspect
+      if p.writables.size == 1
+        counter += 1
+        puts "sending..."
+        sock.send_obj([:ping])
+        sleep 0.1
+        puts "poll 2"
+        p.poll_nonblock
+        if p.readables.size == 1
+          asw = sock.recv_obj
+          counter += 1
+        end
+      end
+      return counter, asw
+    end
+  
+    def gm_ping
+      obj_req_ping Ezap.config.global_master_address
+    end
+=end
   end
 
 end

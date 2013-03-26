@@ -262,6 +262,10 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       def gm_pub_addr
         {reply: {address: GM.get_addr_of(:pub)}}
       end
+
+      def ping
+        {reply: 'ack'}
+      end
       
       #TODO: see GM.send_public
       #def send_public obj

@@ -16,7 +16,7 @@ module Ezap
       @zs.extend(InnerSockMethods)
       [:close,  :bind, :recvmsg, :recv_string, :sendmsg, :send_string, :connect, :setsockopt].each do |m|
         define_singleton_method(m) do |*args|
-          @zs.raise_error_wrap(m, *args)
+          @zs._raise_error_wrap(m, *args)
         end
       end
       extend OuterSockMethods
@@ -25,7 +25,7 @@ module Ezap
 
     module InnerSockMethods
       #check return value fitting to zmq-ffi gem
-      def raise_error_wrap fname, *args
+      def _raise_error_wrap fname, *args
         ret = __send__(fname, *args)
         unless ZMQ::Util.resultcode_ok?(ret)
           msg = ZMQ::Util.error_string
@@ -47,12 +47,32 @@ module Ezap
         send_string(str, fl)
       end
 
-      def send_obj obj
-        self.send(MessagePack.pack(obj))
+      def send_obj obj, fl=0
+        self.send(MessagePack.pack(obj), fl)
       end
 
-      def recv_obj
-        MessagePack.unpack(self.recv)
+      def recv_obj fl=0
+        MessagePack.unpack(self.recv(fl))
+      end
+
+      def ping _sleep=0.01
+        p = ZMQ::Poller.new
+        p.register(zs)
+        ret = send_obj([:ping], ZMQ::NonBlocking)
+        return false unless ZMQ::Util.resultcode_ok?(ret)
+        sleep _sleep
+        p.poll_nonblock
+        unless p.readables.size == 1
+          zs.setsockopt(ZMQ::LINGER, 0)
+          close
+          return false
+        end
+        asw = ''
+        ret = zs.recv_string(asw, ZMQ::NonBlocking)
+        unless ZMQ::Util.resultcode_ok?(ret)
+          return false
+        end
+        return true, MessagePack.unpack(asw)
       end
     end
 
