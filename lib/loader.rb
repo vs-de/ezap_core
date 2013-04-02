@@ -1,3 +1,3 @@
 require 'bundler'
 Bundler.require
-require 'init_file'
+require_relative './init_file'

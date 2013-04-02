@@ -9,5 +9,6 @@
 #output related stuff ends
 
 $: << '.'
-require "#{ENV['EZAP_ROOT'] || '.'}/lib/init_file"
+#require "#{ENV['EZAP_ROOT'] || '.'}/lib/init_file"
+require "#{ENV['EZAP_ROOT'] || '.'}/lib/loader"
 extend Ezap::DirectZeroExtension
