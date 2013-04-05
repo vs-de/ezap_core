@@ -1,11 +1,18 @@
-##!/usr/bin/env ruby
+#!/usr/bin/env ruby
+require 'ezap_core'
 
 module EzapExec
   
   module CM
     
-    def start *args
-      puts "starting"
+    def start type=nil, name=nil
+      unless type || name
+        Ezap::Service::GlobalMaster.start
+      end
+    end
+
+    def stop name=nil
+      Ezap::Service::GlobalMaster.shutdown
     end
 
     def help *args
@@ -40,11 +47,11 @@ EE = EzapExec
 args = ARGV.clone
 case args.shift
   when 's', 'start'
-    EE.start args
+    EE.start *args
   when 'h',' halt', 'stop'
-    EE.stop args
+    EE.stop *args
   when 'help'
-    EE.help args
+    EE.help *args
   else
-    EE.help args
+    EE.help *args
 end
