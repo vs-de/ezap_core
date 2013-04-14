@@ -23,6 +23,7 @@ module Ezap
 
   #order matters here 
   load_lib_dir '../ruby_ext'
+  require 'ezap/config_access'
   require 'ezap/app_config'
   load_lib 'config'
   @@config = Config.new

@@ -10,11 +10,15 @@ module Ezap
   class Config
 
     include Ezap::AppConfig
+    include Ezap::ConfigAccess
     @@hsh = {
       gm_root: EZAP_ROOT
     }
 
     @@hsh[:config_files] = {File.join(@@hsh[:gm_root], CFG_PATH, CFG_FILE_NAME) => :merge}
+    def self._hsh
+      @@hsh
+    end
    
     def set_source_files path_hsh
       @@hsh[:config_files] = path_hsh
@@ -52,26 +56,22 @@ module Ezap
       @@hsh.merge!(YAML.load_file(path).symbolize_keys_rec!.merge!(@@hsh))
     end
 
-    def initialize
+    def initialize opts={}
+      @@hsh[:ezap_env] = (opts[:env] || opts[:ezap_env] || :default).to_sym
       reload
+    end
+
+    def env
+      @@hsh[:ezap_env]
     end
 
     def reload
       cfg_files = @@hsh[:config_files]
       rt = @@hsh[:gm_root]
-      @@hsh = {config_files: cfg_files, gm_root: rt}
+      _env = @@hsh[:ezap_env]
+      @@hsh = {config_files: cfg_files, gm_root: rt, ezap_env: _env}
       cfg_files.each {|k,v| self.send("#{v}_config_file_data", k)}
       self
-    end
-    
-    def method_missing name, *args
-      if (m = name.to_s).end_with?('=')
-        @@hsh[m.chop.to_sym] = args.pop
-      else
-        raise "config keys take no args" unless args.empty?
-        @@hsh.has_key?(name) || raise("key #{name} is not in config")
-        @@hsh[name]
-      end
     end
 
     def to_hash

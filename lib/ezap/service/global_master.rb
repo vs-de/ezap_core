@@ -32,16 +32,16 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
   #type/id/
   #should sign off
 
-  @services = {}
+  @services ||= {}
   
   #States: 
   # -running
   # -stopped
 
-  @config = Ezap.config.global_master_service
-  @state = :stopped
-  @log_file
-  @opts
+  @config ||= Ezap.config.global_master_service
+  @state ||= :stopped
+  #@log_file
+  #@opts
   
   module ClassMethods
     include Ezap::WrappedZeroExtension
@@ -249,6 +249,10 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
         puts "removing service: #{name}"
         GM.services[name] = nil
         {reply: :ack}
+      end
+
+      def bla
+        {reply: :ack2}
       end
 
       def locate_service name

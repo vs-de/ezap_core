@@ -5,9 +5,13 @@ module EzapExec
   
   module CM
     
-    def start type=nil, name=nil
-      unless type || name
-        Ezap::Service::GlobalMaster.start
+    def start type=nil, name=nil, *args
+      unless name #should be same as type || name
+        if type == 'nod'
+          Ezap::Service::GlobalMaster.start(daemonize: false)
+        else
+          Ezap::Service::GlobalMaster.start
+        end
       end
     end
 
@@ -17,6 +21,14 @@ module EzapExec
 
     def help *args
       puts help_msg
+    end
+
+    def run_console *args
+      
+      require 'irb'
+      #exec 'irb -r $EZAP_ROOT/lib/console_defs.rb'
+      ARGV.clear
+      IRB.start
     end
 
     def help_msg
@@ -50,8 +62,11 @@ case args.shift
     EE.start *args
   when 'h',' halt', 'stop'
     EE.stop *args
+  when 'c', 'console'
+    EE.run_console *args
   when 'help'
     EE.help *args
   else
+    $stderr.puts "unrecognized args"
     EE.help *args
 end
