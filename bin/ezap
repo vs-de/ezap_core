@@ -1,6 +1,10 @@
 #!/usr/bin/env ruby
 require 'ezap_core'
 
+  #//TODO: ezap (g)enerate <service> <name>
+  #//TODO: ezap (g)enerate <web_app> <controller|view> <name>
+  #//TODO: ezap (i)nstall [args]
+
 module EzapExec
   
   module CM
@@ -13,6 +17,10 @@ module EzapExec
           Ezap::Service::GlobalMaster.start
         end
       end
+    end
+
+    def eval *args
+      
     end
 
     def stop name=nil
@@ -42,10 +50,7 @@ usage:
   ezap (r)un <file/args to 'ruby'>
   ezap (e)val <ruby-expression>
   ezap (c)onsole
-  //TODO: ezap (g)enerate <service> <name>
-  //TODO: ezap (g)enerate <web_app> <controller|view> <name>
-  //TODO: ezap (i)nstall [args]
-  ezap (h)elp
+  ezap help
 
 HELP
     end
@@ -64,6 +69,8 @@ case args.shift
     EE.stop *args
   when 'c', 'console'
     EE.run_console *args
+  when 'e', 'eval'
+    EE.eval
   when 'help'
     EE.help *args
   else
