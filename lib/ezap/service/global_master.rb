@@ -196,6 +196,10 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       stop
     end
 
+    def ping
+      gm_ping
+    end
+
     #should respond with an overview of the current state/config
     def summarize
       services
