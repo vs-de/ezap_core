@@ -9,9 +9,10 @@ module EzapExec
   
   module CM
     
-    def start type=nil, name=nil, *args
+    def start(*args, type: nil, name: nil)
+      puts args.inspect
       unless name #should be same as type || name
-        if type == 'nod'
+        if args.first == 'fg'
           Ezap::Service::GlobalMaster.start(daemonize: false)
         else
           Ezap::Service::GlobalMaster.start
