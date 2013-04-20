@@ -11,7 +11,7 @@ module EzapExec
     
     def start type=nil, name=nil, *args
       unless name #should be same as type || name
-        if type == 'nod'
+        if type == 'fg'
           Ezap::Service::GlobalMaster.start(daemonize: false)
         else
           Ezap::Service::GlobalMaster.start
@@ -39,8 +39,10 @@ module EzapExec
       
       require 'irb'
       #exec 'irb -r $EZAP_ROOT/lib/console_defs.rb'
+      require 'console_defs'
       ARGV.clear
       IRB.start
+      puts "goodbye"
     end
 
     def help_msg

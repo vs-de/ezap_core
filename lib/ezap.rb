@@ -40,6 +40,8 @@ module Ezap
   require 'ezap/global_master_connection'
   require 'ezap/sub_listener'
   require 'ezap/publisher'
+  require 'ezap/cache_storage'
+  require 'ezap/main_cache_storage'
   require 'ezap/service'
   require 'ezap/service/master'
   require 'ezap/service/global_master'

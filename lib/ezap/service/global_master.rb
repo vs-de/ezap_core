@@ -42,6 +42,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
   @state ||= :stopped
   #@log_file
   #@opts
+  @cache_store ||= Ezap::MainCacheStorage.new
   
   module ClassMethods
     include Ezap::WrappedZeroExtension
@@ -92,7 +93,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       req = @rep.recv_obj
       disp = dispatch_request(req)
       print "|sending...";$stdout.flush
-      @rep.send_obj(disp[:reply] || disp)
+      @rep.send_obj(disp.key?(:reply) ? disp[:reply] : disp)
       puts "sent"
       hook = disp[:after_response]
       hook && send(hook)
@@ -189,7 +190,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       close_sockets
       puts "sockets closed."
       close_log
-      File.delete(PID_FILE)
+      File.delete(PID_FILE) if File.exists?(PID_FILE)
     end
 
     def local_shutdown
@@ -203,6 +204,19 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     #should respond with an overview of the current state/config
     def summarize
       services
+    end
+
+    def config *args
+      gm_request :config, args
+    end
+
+    #wait for availability
+    def wait
+      wait_for_gm
+    end
+
+    def local_config *args
+      args.inject(Ezap.config){|cfg,msg| cfg.send(msg)}
     end
 
   end
@@ -255,8 +269,8 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
         {reply: :ack}
       end
 
-      def bla
-        {reply: :ack2}
+      def config args
+        {reply: GM.local_config(*args)}
       end
 
       def locate_service name

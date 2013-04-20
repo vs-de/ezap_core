@@ -11,4 +11,9 @@
 $: << '.'
 #require "#{ENV['EZAP_ROOT'] || '.'}/lib/init_file"
 require "#{ENV['EZAP_ROOT'] || '.'}/lib/loader"
+#IRB.conf[:AUTO_INDENT] = true
+#IRB.conf[:USE_READLINE] = true
+#unless (IRB.conf[:LOAD_MODULES] ||= []).include?('irb/completion')
+#  IRB.conf[:LOAD_MODULES] << 'irb/completion'
+#end
 extend Ezap::DirectZeroExtension

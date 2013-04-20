@@ -89,6 +89,16 @@ module Ezap
       sock.connect(Ezap.config.global_master_address)
       sock.ping
     end
+
+    #wait for gm to appear...
+    def wait_for_gm timeout=1*60*60, poll_ivl=10
+      t = Time.now
+      until gm_ping
+        return false if Time.now - t > timeout
+        sleep poll_ivl
+      end
+      true
+    end
 #doesn't work as expected in case of rep down
 #see zmq doc
 =begin
