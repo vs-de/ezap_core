@@ -19,12 +19,16 @@ module EzapExec
       end
     end
 
-    def eval *args
-      
+    def run_expression *args
+      eval args.join(" ")
     end
 
     def stop name=nil
       Ezap::Service::GlobalMaster.shutdown
+    end
+
+    def gm_ping
+      puts [Ezap::Service::GlobalMaster.ping].flatten.first
     end
 
     def help *args
@@ -50,6 +54,7 @@ usage:
   ezap (r)un <file/args to 'ruby'>
   ezap (e)val <ruby-expression>
   ezap (c)onsole
+  ezap gm_ping(/gmp)
   ezap help
 
 HELP
@@ -60,6 +65,7 @@ HELP
 
   extend CM
 end
+
 EE = EzapExec
 args = ARGV.clone
 case args.shift
@@ -70,9 +76,11 @@ case args.shift
   when 'c', 'console'
     EE.run_console *args
   when 'e', 'eval'
-    EE.eval
+    EE.run_expression *args
   when 'help'
     EE.help *args
+  when 'gmp', 'gm_ping'
+    EE.gm_ping
   else
     $stderr.puts "unrecognized args"
     EE.help *args
