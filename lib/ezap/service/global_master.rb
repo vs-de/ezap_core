@@ -51,11 +51,17 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     def daemonize
       raise "Error: pidfile already exists!" if File.exists?(PID_FILE)
       Process.daemon
+      #that fixes the zmq usage before pid-change
+      Ezap::ZmqCtx.reset
       f = File.open(PID_FILE, 'w');f.write(Process.pid);f.close
       start_log
     end
 
     def start opts={}
+      if gm_ping
+        $stderr.puts "warning: ezap gm seems to be up already. Start skipped."
+        return false
+      end
       (@opts ||= {:daemonize => true}).merge!(opts.symbolize_keys!)
       puts "ezap global master starting..."
       daemonize if @opts[:daemonize]
@@ -122,8 +128,14 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     #TODO:
     #maybe should all be initialized when class is used, see start
     def shutdown
-      asw = gm_request :shutdown
-      puts "stop asw: #{asw} "
+      if gm_ping
+        asw = gm_request :shutdown
+        puts "stop asw: #{asw} "
+        true
+      else
+        puts "could not instantly connect to gm"
+        false
+      end
     end
 
     def soft_reset
@@ -152,6 +164,14 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       src = File.expand_path(__FILE__)
       puts "reloading from #{src}"
       load src
+    end
+
+    def reload_config
+      gm_request :reload_config
+    end
+
+    def local_reload_config
+      @config = Ezap.config.reload.global_master_service
     end
 
     #TODO: this is a bit unclear
@@ -216,7 +236,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     end
 
     def local_config *args
-      args.inject(Ezap.config){|cfg,msg| cfg.send(msg)}
+      args.inject(Ezap.config.global_master_service){|cfg,msg| cfg.send(msg)}
     end
 
   end
@@ -271,6 +291,11 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
 
       def config args
         {reply: GM.local_config(*args)}
+      end
+
+      def reload_config
+        GM.local_reload_config
+        {reply: :ack}
       end
 
       def locate_service name

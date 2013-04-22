@@ -87,7 +87,9 @@ module Ezap
     def gm_ping
       sock = make_socket(:req)
       sock.connect(Ezap.config.global_master_address)
-      sock.ping
+      ret = sock.ping
+      sock.close
+      ret
     end
 
     #wait for gm to appear...
