@@ -50,7 +50,13 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
 
     def daemonize
       #warning?
-      #raise "Error: pidfile already exists!" if File.exists?(PID_FILE)
+      #raise "Error: pidfile already exists!"
+      if File.exists?(PID_FILE)
+        f = File.open(PID_FILE, 'r')
+        $stderr.puts "warning: old pid file exists with pid #{f.read}. Deleting..."
+        f.close
+        File.delete(PID_FILE)
+      end
       Process.daemon
       #that fixes the zmq usage before pid-change
       Ezap::ZmqCtx.reset
