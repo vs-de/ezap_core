@@ -49,7 +49,8 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     include Ezap::GlobalMasterConnection
 
     def daemonize
-      raise "Error: pidfile already exists!" if File.exists?(PID_FILE)
+      #warning?
+      #raise "Error: pidfile already exists!" if File.exists?(PID_FILE)
       Process.daemon
       #that fixes the zmq usage before pid-change
       Ezap::ZmqCtx.reset
