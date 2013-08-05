@@ -66,7 +66,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
 
     def start opts={}
       if gm_ping
-        $stderr.puts "warning: ezap gm seems to be up already. Start skipped."
+        $stderr.puts "warning: ezap gm seems to be up already. Start canceled."
         return false
       end
       (@opts ||= {:daemonize => true}).merge!(opts.symbolize_keys!)
@@ -149,7 +149,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       gm_request :soft_reset
     end
 
-    #closes asn re-opens sockets and eventually log(if daemonized)
+    #closes and re-opens sockets and eventually log(if daemonized)
     def local_soft_reset pause=1
       state!(:restarting)
       puts "restarting GM..."
@@ -161,6 +161,10 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       end
       sleep pause
       start(daemonize: false)
+    end
+
+    def local_service_list
+      services.keys
     end
 
     def reload_source
@@ -228,9 +232,13 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       gm_ping
     end
 
+    def service_info
+      gm_request :service_info
+    end
+
     #should respond with an overview of the current state/config
-    def summarize
-      services
+    def local_service_info
+      services.map{|name, s| {name => s.address} if s}.compact
     end
 
     def config *args
@@ -256,6 +264,10 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
 
       def state
         {reply: GM.state}
+      end
+
+      def service_info
+        {reply: GM.local_service_info}
       end
 
       def shutdown
