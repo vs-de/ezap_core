@@ -84,10 +84,10 @@ module Ezap
       verbose_obj_req_ping Ezap.config.global_master_address
     end
 
-    def gm_ping
+    def gm_ping *args
       sock = make_socket(:req)
       sock.connect(Ezap.config.global_master_address)
-      ret = sock.ping
+      ret = sock.ping(*args)
       sock.close
       ret
     end

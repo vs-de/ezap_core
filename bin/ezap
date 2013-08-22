@@ -28,8 +28,11 @@ module EzapExec
       Ezap::Service::GlobalMaster.shutdown
     end
 
-    def gm_ping
-      puts [Ezap::Service::GlobalMaster.ping].flatten.first
+    def gm_ping *args
+      if args.size > 0
+        args = [args.first.to_f]
+      end
+      puts [Ezap::Service::GlobalMaster.ping(*args)].flatten.first
     end
 
     def help *args
@@ -83,7 +86,7 @@ case args.shift
   when 'help'
     EE.help *args
   when 'gmp', 'gm_ping'
-    EE.gm_ping
+    EE.gm_ping *args
   else
     $stderr.puts "unrecognized args"
     EE.help *args

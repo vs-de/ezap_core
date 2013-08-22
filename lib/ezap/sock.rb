@@ -55,7 +55,7 @@ module Ezap
         MessagePack.unpack(self.recv(fl))
       end
 
-      def ping _sleep=0.01
+      def ping _sleep=0.05
         p = ZMQ::Poller.new
         p.register(zs)
         ret = send_obj([:ping], ZMQ::NonBlocking)

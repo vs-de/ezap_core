@@ -228,8 +228,8 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       stop
     end
 
-    def ping
-      gm_ping
+    def ping *args
+      gm_ping *args
     end
 
     def service_info
