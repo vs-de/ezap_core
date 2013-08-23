@@ -32,6 +32,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
   #type/id/
   #should sign off
 
+  #we use ||= and not = here to allow re-reading the source file
   @services ||= {}
   
   #States: 
@@ -230,6 +231,10 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
 
     def ping *args
       gm_ping *args
+    end
+
+    def locate_service name
+      gm_request :locate_service, name
     end
 
     def service_info

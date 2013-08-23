@@ -5,6 +5,10 @@ require 'ezap_core'
   #//TODO: ezap (g)enerate <web_app> <controller|view> <name>
   #//TODO: ezap (i)nstall [args]
 
+#class SrvAdp < Ezap::ServiceAdapter
+#  def stop ; service_request :stop ; end
+#end
+
 module EzapExec
   
   module CM
@@ -17,6 +21,33 @@ module EzapExec
         else
           Ezap::Service::GlobalMaster.start
         end
+      else
+        puts "name not implemented"
+      end
+    end
+
+    def start_service name
+        puts "starting #{args} - no implemented"
+    end
+
+    def stop_service name
+      hsh = Ezap::Service::GlobalMaster.locate_service name
+      addr = hsh['address']
+      return (puts "service '#{name}' not found") unless addr
+      sock = Ezap::Sock.new(:req)
+      sock.connect addr
+      sock.send_obj [:stop]
+      asw = sock.recv_obj
+      $stderr.puts "error: asw not ack: #{asw}" unless asw == 'ack'
+      sock.close
+      sleep 0.1
+      #check presence again
+      hsh = Ezap::Service::GlobalMaster.locate_service name
+      addr = hsh['address']
+      if addr
+        return $stderr.puts "error: service still up!"
+      else
+        puts "service stopped."
       end
     end
 
@@ -25,7 +56,11 @@ module EzapExec
     end
 
     def stop name=nil
-      Ezap::Service::GlobalMaster.shutdown
+      unless name
+        Ezap::Service::GlobalMaster.shutdown
+      else
+        stop_service name
+      end
     end
 
     def gm_ping *args
