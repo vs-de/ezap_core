@@ -19,7 +19,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
   end
 
   class <<self
-    attr_accessor :state, :services
+    attr_accessor :state, :services, :bad_services
   end
 
   PID_FILE=File.join(Ezap.config.gm_root, 'var', 'pids', 'global_master.pid')
@@ -34,6 +34,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
 
   #we use ||= and not = here to allow re-reading the source file
   @services ||= {}
+  @bad_services ||= {}
   
   #States: 
   # -running
@@ -66,7 +67,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     end
 
     def start opts={}
-      if gm_ping
+      if gm_ping 2
         $stderr.puts "warning: ezap gm seems to be up already. Start canceled."
         return false
       end
@@ -136,12 +137,12 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     #TODO:
     #maybe should all be initialized when class is used, see start
     def shutdown
-      if gm_ping
+      if gm_ping to=2
         asw = gm_request :shutdown
         puts "stop asw: #{asw} "
         true
       else
-        puts "could not instantly connect to gm"
+        puts "could not connect to gm within #{to}s."
         false
       end
     end
@@ -245,6 +246,14 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     def local_service_info
       services.map{|name, s| {name => s.address} if s}.compact
     end
+    
+    def bad_service_info
+      gm_request :bad_service_info
+    end
+
+    def local_bad_service_info
+      bad_services.map{|name, list| {name => list.map(&:address)} if list}.compact
+    end
 
     def config *args
       gm_request :config, args
@@ -274,6 +283,11 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       def service_info
         {reply: GM.local_service_info}
       end
+      
+      def bad_service_info
+        {reply: GM.local_bad_service_info}
+      end
+
 
       def shutdown
         {reply: 'ack', after_response: 'local_shutdown'}
@@ -299,6 +313,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
             return {error: "service with name '#{name}' already registered and healthy"}
           else
             print 're- ' #;)
+            (GM.bad_services[name] ||= []) << GM.services.delete(name)
           end
         end
         print "adding service: #{name}"
@@ -368,7 +383,13 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
 
     #TODO: fill
     def healthy?
-      true
+      ping
+    end
+
+    def ping
+      sock = Ezap::Sock.new(:req)
+      sock.connect self.address
+      sock.ping
     end
 
     #TODO: probably wrong for other transports

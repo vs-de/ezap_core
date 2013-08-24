@@ -13,16 +13,20 @@ module EzapExec
   
   module CM
     
-    def start(*args, type: nil, name: nil)
-      puts args.inspect
-      unless name #should be same as type || name
-        if args.first == 'fg'
+    def start(*args)
+      if args.empty?
+        return Ezap::Service::GlobalMaster.start
+      end
+
+      case args.first
+        when 'fg'
           Ezap::Service::GlobalMaster.start(daemonize: false)
+        when 'service'
+          puts "service start not implemented yet"
+        when 'web_app'
+          puts "web_app start not implemented yet"
         else
-          Ezap::Service::GlobalMaster.start
-        end
-      else
-        puts "name not implemented"
+          puts "can't start '#{args.first}': unknown entity"
       end
     end
 

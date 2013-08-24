@@ -93,9 +93,9 @@ module Ezap
     end
 
     #wait for gm to appear...
-    def wait_for_gm timeout=1*60*60, poll_ivl=10
+    def wait_for_gm timeout=1*60*60, poll_ivl=1
       t = Time.now
-      until gm_ping
+      until gm_ping 10
         return false if Time.now - t > timeout
         sleep poll_ivl
       end

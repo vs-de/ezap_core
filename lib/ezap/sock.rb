@@ -55,7 +55,49 @@ module Ezap
         MessagePack.unpack(self.recv(fl))
       end
 
-      def ping _sleep=0.1
+      #
+      def wait_ping
+        
+      end
+
+      #strict boolean ping
+      def bping
+        !!(ping rescue false)
+      end
+
+      def ping timeout=5, sleep: 0.01
+        p = ZMQ::Poller.new
+        p.register(zs)
+        ret = send_obj([:ping], ZMQ::NonBlocking)
+        #raise?
+        #return false unless ZMQ::Util.resultcode_ok?(ret)
+        unless ZMQ::Util.resultcode_ok?(ret)
+          raise "bad result_code when sending: #{ret}"
+        end
+        t = Time.now
+        while true
+          sleep sleep
+          p.poll_nonblock
+          t1 = Time.now-t
+          break if p.readables.size == 1
+          if t1 > timeout
+            zs.setsockopt(ZMQ::LINGER, 0)
+            close
+            return false
+          end
+        end
+        asw = ''
+        ret = zs.recv_string(asw, ZMQ::NonBlocking)
+        unless ZMQ::Util.resultcode_ok?(ret)
+          #return false
+          raise "bad result_code when receiving: #{ret}"
+        end
+        return true, MessagePack.unpack(asw), ("%.2f" % t1).to_f
+
+      end
+      
+      #old version, fixed w8 time
+      def _ping _sleep=0.1
         p = ZMQ::Poller.new
         p.register(zs)
         ret = send_obj([:ping], ZMQ::NonBlocking)
