@@ -16,7 +16,7 @@ global_master_service:
     cache_storage:
       default:
         type: redis #memcache, whatever?
-        addr: 'locahost'
+        addr: '127.0.0.1:6379'
 
 global_master_address:
   default: *gm_address

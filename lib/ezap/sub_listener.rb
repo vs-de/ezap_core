@@ -73,7 +73,7 @@ class Ezap::SubscriptionListener
     attr_reader :value
     def initialize sth, *args
       if sth.is_a?(String) || sth.is_a?(Symbol)
-        send(sth, *args)
+        respond_to?(sth) && send(sth, *args)
       else
         @obj = sth
       end
