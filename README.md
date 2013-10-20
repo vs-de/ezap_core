@@ -1,12 +1,18 @@
 #Ezap Service
 
-Ezap Service Gem
+Ezap Core Gem
 
 ## Installation
 
+### Prerequisites
+
+  zeromq, either all v2 or all v3:
+  http://zeromq.org/
+
+### fetch it
 Add this line to your application's Gemfile:
 
-    gem 'ezap_service', :git => ssh://git@repos.wecuddle.org/~/ezap_service.git
+    gem 'ezap_core', :git => https://github.com/vs-de/ezap_core.git
 
 And then execute:
 
