@@ -1,6 +1,6 @@
-#Ezap Service
+#Ezap Core
 
-Ezap Core Gem
+Ezap Core Gem for Ezap distributed service system
 
 ## Installation
 
