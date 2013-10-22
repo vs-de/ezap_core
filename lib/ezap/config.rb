@@ -16,8 +16,9 @@ module Ezap
     @@hsh = {
       gm_root: EZAP_ROOT
     }
-
-    @@hsh[:config_files] = {File.join(@@hsh[:gm_root], CFG_PATH, CFG_FILE_NAME) => :merge}
+    #@init_cfg_file ||= search_config(CFG_FILE_NAME)
+    @init_cfg_file = File.join(@@hsh[:gm_root], CFG_PATH, CFG_DEFAULT_FILE_NAME)
+    @@hsh[:config_files] = {@init_cfg_file => :merge}
     def self._hsh
       @@hsh
     end

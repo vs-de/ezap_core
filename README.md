@@ -9,10 +9,10 @@ Ezap Core Gem for Ezap distributed service system
   zeromq, either all v2 or all v3:
   http://zeromq.org/
 
-### fetch it
+### Fetch it
 Add this line to your application's Gemfile:
 
-    gem 'ezap_core', :git => https://github.com/vs-de/ezap_core.git
+    gem 'ezap_core', git: 'https://github.com/vs-de/ezap_core.git'
 
 And then execute:
 

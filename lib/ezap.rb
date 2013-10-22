@@ -8,7 +8,8 @@
 module Ezap
   #require 'bundler'
   #Bundler.require
-  CFG_FILE_NAME = 'main.yml'
+  CFG_DEFAULT_FILE_NAME = 'defaults.yml'
+  CFG_FILE_NAME = 'ezap_main.yml'
   CFG_PATH = 'config'
  
   def self.load_lib *x
