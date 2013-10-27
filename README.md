@@ -31,14 +31,19 @@ Ezap is currently reviewed and cleaned to get out of the works-for-me(/one purpo
 Usage will be demonstrated with example code in 'ezap\_demos' repos soon.
 
 but here are already some lines about the new config arg for now(be="bundle exec"):
+
     $ be ezap help
     $ be ezap s
     $ be ezap config dump x.yml
+
 review and adjust the file, then
+    
     $ be ezap config apply x.yml
 
 test if ezap is running([g]lobal [m]aster [p]ing):
+
     $ be ezap gmp
+
 this saves the config permanently and will be loaded next time
 
 ## Contributing
