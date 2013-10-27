@@ -15,7 +15,8 @@ module Ezap::ConfigAccess
         self.class._hsh[m.chop.to_sym] = args.pop
       else
         raise "config keys take no args" unless args.empty?
-        self.class._hsh.has_key?(name) || raise("key #{name} is not in config")
+        #this double check is important, don't remove the second access-try
+        self.class._hsh.has_key?(name) || self.class._hsh[name] || raise("key #{name} is not in config")
         obj = self.class._hsh[name]
         if obj.is_a?(Hash)
           ret = obj[env]

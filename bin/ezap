@@ -12,15 +12,16 @@ require 'ezap_core'
 module EzapExec
   
   module CM
+    GM = Ezap::Service::GlobalMaster
     
     def start(*args)
       if args.empty?
-        return Ezap::Service::GlobalMaster.start
+        return GM.start
       end
 
       case args.first
         when 'fg'
-          Ezap::Service::GlobalMaster.start(daemonize: false)
+          GM.start(daemonize: false)
         when 'service'
           puts "service start not implemented yet"
         when 'web_app'
@@ -31,11 +32,11 @@ module EzapExec
     end
 
     def start_service name
-        puts "starting #{args} - no implemented"
+        puts "starting #{name} - no implemented"
     end
 
     def stop_service name
-      hsh = Ezap::Service::GlobalMaster.locate_service name
+      hsh = GM.locate_service name
       addr = hsh['address']
       return (puts "service '#{name}' not found") unless addr
       sock = Ezap::Sock.new(:req)
@@ -46,7 +47,7 @@ module EzapExec
       sock.close
       sleep 0.1
       #check presence again
-      hsh = Ezap::Service::GlobalMaster.locate_service name
+      hsh = GM.locate_service name
       addr = hsh['address']
       if addr
         return $stderr.puts "error: service still up!"
@@ -61,7 +62,7 @@ module EzapExec
 
     def stop name=nil
       unless name
-        Ezap::Service::GlobalMaster.shutdown
+        GM.shutdown
       else
         stop_service name
       end
@@ -71,11 +72,50 @@ module EzapExec
       if args.size > 0
         args = [args.first.to_f]
       end
-      puts [Ezap::Service::GlobalMaster.ping(*args)].flatten.first
+      puts [GM.ping(*args)].flatten.first
+    end
+
+    def config *args
+      case args.shift
+        when 'store'
+          loc = args.shift
+          loc ||= :home
+          puts "dumping to [#{GM.hostname}]: #{GM.store_main_config loc}"
+        when 'load'
+          fn = args.shift
+          #Ezap.config.load_init_config args.shift
+          GM.load_main_config YAML.load_file(fn)
+        when 'apply'
+          fn = args.shift
+          GM.load_main_config YAML.load_file(fn)
+          GM.store_main_config *args
+          GM.reload_config
+          GM.soft_reset
+          #Ezap.config.load_init_config fn
+          #GM.ping
+        when 'dump'
+          Ezap.config.dump args.shift
+        else
+          $stderr.puts "config arg no recognized"
+      end
     end
 
     def help *args
-      puts help_msg
+      case args.shift
+        when 'config'
+          puts <<CFG_HELP
+  -- main config file management:
+
+  ezap config store [home* | gem | local] (default *)
+    -> store permanently
+  ezap config load <from_file>
+  ezap config dump [file] (or stdout if omitted)
+CFG_HELP
+        when nil
+          puts help_msg
+      else
+        $stderr.puts('no help - unrecognized command')
+      end
     end
 
     def run_console *args
@@ -94,11 +134,12 @@ module EzapExec
   << -- e z a p -- >>
 
 usage:
-  ezap (s)tart [<service|web_app>] name]
+  ezap (s)tart [service|web_app <name>]
   ezap stop/(h)alt [service]
   ezap (r)un <file/args to 'ruby'>
   ezap (e)val <ruby-expression>
   ezap (c)onsole
+  ezap config { store [local|gem|home] | load <file> | dump [file] }
   ezap gm_ping(/gmp)
   ezap help
 
@@ -126,6 +167,11 @@ case args.shift
     EE.help *args
   when 'gmp', 'gm_ping'
     EE.gm_ping *args
+  when 'config'
+    EE.config *args
+  when nil
+    puts "empty args"
+    EE.help *args
   else
     $stderr.puts "unrecognized args"
     EE.help *args

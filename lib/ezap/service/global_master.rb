@@ -24,8 +24,8 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     attr_accessor :state, :services, :bad_services
   end
 
-  PID_FILE=File.join(Ezap.config.gm_root, 'var', 'pids', 'global_master.pid')
-  LOG_FILE=File.join(Ezap.config.gm_root, 'log', 'global_master.log')
+  PID_FILE = File.join(Ezap.config.gm_root, 'var', 'pids', 'global_master.pid')
+  LOG_FILE = File.join(Ezap.config.gm_root, 'log', 'global_master.log')
 
   #TODO: 
   #     1) use a logger object
@@ -47,10 +47,100 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
   #@log_file
   #@opts
   @cache_store ||= Ezap::MainCacheStorage.new
+
+  #@local_prefix = 'lc'
+
+
+  #####                                                          #####
+  ##                                                                ##
+  #  LocalMethods - accessed from dispatcher on running GM-instance  #
+  ##                                                                ##
+  #####                                                          #####
+
+  # every method defined here will later be made available automatically
+  # as static method over remote but will executed locally on the running 
+  # instance(hence the name)
+
+  module LocalMethods
+
+    #### init ####
+    
+    @names = []
+    class << self
+      attr :names
+    end
+    def self.method_added m
+      unless m.to_s =~ /^local_/
+        @names << m
+        alias_method "local_#{m}", m
+        remove_method m
+      end
+    end 
+
+    #### here we go ####
+   
+    def load_main_config new_cfg
+      Ezap.config.set_init_config new_cfg
+      @config = Ezap.config.global_master_service
+    end
+
+    def store_main_config loc=:home
+      Ezap.config.store_init_config loc.to_sym
+    end
+    
+    def store_main_config_to path
+      Ezap.config.store_init_config path
+    end
+
+    def config *args
+      args.inject(Ezap.config.global_master_service){|cfg,msg| cfg.send(msg)}
+    end
+
+    def reload_source
+      src = File.expand_path(__FILE__)
+      puts "reloading from #{src}"
+      load src
+      true
+    end
+
+    def reload_config
+      @config = Ezap.config.reload.global_master_service
+      true
+    end
+    
+    def service_info
+      services.map{|name, s| {name => s.address} if s}.compact
+    end
+    
+    def bad_service_info
+      bad_services.map{|name, list| {name => list.map(&:address)} if list}.compact
+    end
+
+    def hostname
+      Socket.gethostname
+    end
+    
+  end
   
+  #here we make all these local methods available as public & remote static methods on GM 
+  module RemoteMethods
+    #[:load_main_config_file]
+    LocalMethods.names.each do |m|
+      define_method(m) {|*args| gm_request(m, *args)}
+    end
+  end
+  
+  #####                                 #####
+  ##                                       ##
+  #  ClassMethods - non-automapped methods  #
+  ##                                       ##
+  #####                                 #####
+
   module ClassMethods
     include Ezap::WrappedZeroExtension
     include Ezap::GlobalMasterConnection
+    include LocalMethods
+    include RemoteMethods
 
     def daemonize
       #warning?
@@ -117,9 +207,9 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     rescue MessagePack::MalformedFormatError => e
       $stderr.puts "Error: could not decode request: #{e.message}";$stderr.flush
       @rep.send_string('rst')
-    rescue => e
-      state!(:failure)
-      raise "GM Fatal: #{e.message} #{e.inspect}"
+    #rescue => e
+    #  state!(:failure)
+    #  raise "GM Fatal: #{e.message} #{e.inspect}"
     end
 
     def dispatch_request req
@@ -148,12 +238,12 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
         false
       end
     end
-
-    def soft_reset
+    
+    #closes and re-opens sockets and eventually log(if daemonized)
+    def soft_reset pause=1
       gm_request :soft_reset
     end
 
-    #closes and re-opens sockets and eventually log(if daemonized)
     def local_soft_reset pause=1
       state!(:restarting)
       puts "restarting GM..."
@@ -167,27 +257,6 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       start(daemonize: false)
     end
 
-    def local_service_list
-      services.keys
-    end
-
-    def reload_source
-      gm_request :reload_source
-    end
-
-    def local_reload_source
-      src = File.expand_path(__FILE__)
-      puts "reloading from #{src}"
-      load src
-    end
-
-    def reload_config
-      gm_request :reload_config
-    end
-
-    def local_reload_config
-      @config = Ezap.config.reload.global_master_service
-    end
 
     #TODO: this is a bit unclear
     #def send_public channel, obj
@@ -228,10 +297,6 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       File.delete(PID_FILE) if File.exists?(PID_FILE)
     end
 
-    def local_shutdown
-      stop
-    end
-
     def ping *args
       gm_ping *args
     end
@@ -240,68 +305,37 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       gm_request :locate_service, name
     end
 
-    def service_info
-      gm_request :service_info
-    end
-
-    #should respond with an overview of the current state/config
-    def local_service_info
-      services.map{|name, s| {name => s.address} if s}.compact
-    end
-    
-    def bad_service_info
-      gm_request :bad_service_info
-    end
-
-    def local_bad_service_info
-      bad_services.map{|name, list| {name => list.map(&:address)} if list}.compact
-    end
-
-    def config *args
-      gm_request :config, args
-    end
-
     #wait for availability
     def wait
       wait_for_gm
     end
-
-    def local_config *args
-      args.inject(Ezap.config.global_master_service){|cfg,msg| cfg.send(msg)}
-    end
-
+    
   end
 
   extend ClassMethods
+
+  ###                ###
+  #     Dispatcher     #
+  ###                ###
 
   class GmDispatcher
     module Commands
       GM = Ezap::Service::GlobalMaster
 
-      def state
-        {reply: GM.state}
+      Ezap::Service::GlobalMaster::LocalMethods.names.each do |m|
+        define_method(m) {|*args| {reply: GM.send("local_#{m}", *args)}}
       end
-
-      def service_info
-        {reply: GM.local_service_info}
-      end
-      
-      def bad_service_info
-        {reply: GM.local_bad_service_info}
-      end
-
 
       def shutdown
-        {reply: 'ack', after_response: 'local_shutdown'}
+        {reply: 'ack', after_response: 'stop'}
       end
       
       def soft_reset
         {reply: 'ack', after_response: 'local_soft_reset'}
       end
 
-      def reload_source
-        GM.local_reload_source
-        {reply: 'ack'}
+      def state
+        {reply: GM.state}
       end
 
       def svc_reg opts
@@ -327,15 +361,6 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       def svc_unreg name
         puts "removing service: #{name}"
         GM.services[name] = nil
-        {reply: :ack}
-      end
-
-      def config args
-        {reply: GM.local_config(*args)}
-      end
-
-      def reload_config
-        GM.local_reload_config
         {reply: :ack}
       end
 
@@ -365,8 +390,12 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
         GM.publish chan, *args
         {reply: :ack}
       end
+
     end
     extend Commands
+    def self.commands
+      {reply: Commands.public_instance_methods}
+    end
   end
 
   #remote as seen from globalmaster

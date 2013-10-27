@@ -18,11 +18,26 @@ class Hash
     self
   end
 
+  def stringigy_keys!
+    keys.each do |k|
+      self[k.to_s] = self.delete(k)
+    end
+    self
+  end
+  
   #in place recursive
   def symbolize_keys_rec!
     keys.each do |k|
       v = self.delete(k)
       self[k.to_sym] = v.is_a?(Hash) ? v.symbolize_keys_rec! : v
+    end
+    self
+  end
+  
+  def stringify_keys_rec!
+    keys.each do |k|
+      v = self.delete(k)
+      self[k.to_s] = v.is_a?(Hash) ? v.stringify_keys_rec! : v
     end
     self
   end
