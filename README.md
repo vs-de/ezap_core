@@ -53,7 +53,8 @@ review and adjust the file, then
 this saves the config permanently and will be loaded next time:
     
     $ be ezap config store
-    
+
+(now u can delete x.yml)
 to stop ezap use:
 
     $ be ezap h
