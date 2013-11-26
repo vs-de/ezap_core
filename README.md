@@ -3,7 +3,7 @@
 Ezap Core Gem for Ezap distributed service system.
 The JetPack-fuel comes from zeromq, redis and MessagePack.
 
-Currently it should only be used inside a save network, encryption&auth will be added to allow transport over untrusted networks(/just filter the configured ports).
+Currently it should only be used inside a safe network, encryption&auth will be added to allow transport over untrusted networks(/just filter the configured ports).
 
 ## Installation
 
@@ -12,7 +12,7 @@ Currently it should only be used inside a save network, encryption&auth will be 
   **zeromq** your nodes should have either all v2.2.x or all v3.2.x:
   http://zeromq.org/
  
-  **redis** (optional, maybe become a hard-dependency soon)
+  **redis** (optional, maybe becomes a hard-dependency soon)
   http://redis.io/
 
 ### Fetch it
