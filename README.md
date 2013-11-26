@@ -9,9 +9,9 @@ Currently it should only be used inside a save network, encryption&auth will be 
 
 ### Prerequisites
 
-  zeromq, your nodes should have either all v2.2.x or all v3.2.x:
+  **zeromq** your nodes should have either all v2.2.x or all v3.2.x:
   http://zeromq.org/
-  redis (optional, maybe become a hard-dependency soon)
+  **redis** (optional, maybe become a hard-dependency soon)
   http://redis.io/
 
 ### Fetch it
@@ -25,8 +25,8 @@ And then execute:
 
 ## Usage
 
-Ezap is currently reviewed and cleaned to get out of the works-for-me(/one purpose) stage.
-Usage will be demonstrated with example code in 'ezap\_demos' repos soon.
+Ezap is constantly reviewed and extended by my humble self.
+Usage will be demonstrated increasingly in the [demos](https://github.com/vs-de/ezap_demos)-repos.
 
 To start ezap just run this(be="bundle exec"):
     
@@ -52,6 +52,10 @@ review and adjust the file, then
 this saves the config permanently and will be loaded next time:
     
     $ be ezap config store
+    
+to stop ezap use:
+
+    $ be ezap h
     
 please look into [ezap_demos](https://github.com/vs-de/ezap_demos.git) for an example and more info
 
