@@ -119,6 +119,14 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     def hostname
       Socket.gethostname
     end
+
+    def zmq_version
+      ZMQ::Util.version
+    end
+
+    def zmq_version_string
+      local_zmq_version.map(&:to_i).join('.')
+    end
     
   end
   
