@@ -9,7 +9,7 @@ Currently it should only be used inside a safe network, encryption&auth will be 
 
 ### Prerequisites
 
-  **zeromq** your nodes should have either all v2.2.x or all v3.2.x:
+  **zeromq** your nodes must have zeromq v3.2.x:
   http://zeromq.org/
  
   **redis** (optional, maybe becomes a hard-dependency soon)

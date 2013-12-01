@@ -7,6 +7,7 @@
 # You should have received a copy of the GNU General Public License
 # in the file COPYING along with Ezap. If not, see <http://www.gnu.org/licenses/>.
 #####
+#
 module Ezap
   class Sock #just simple zmq wrapper
 
@@ -16,7 +17,7 @@ module Ezap
       type = _type.is_a?(Fixnum) ? _type : ZMQ.const_get(_type.to_s.upcase) 
       @zs = Ezap::ZmqCtx().socket(type)
       @zs.extend(InnerSockMethods)
-      [:close,  :bind, :recvmsg, :recv_string, :sendmsg, :send_string, :connect, :setsockopt].each do |m|
+      [:close,  :bind, :recvmsg, :recv_string, :sendmsg, :send_string, :connect, :getsockopt, :setsockopt].each do |m|
         define_singleton_method(m) do |*args|
           @zs._raise_error_wrap(m, *args)
         end

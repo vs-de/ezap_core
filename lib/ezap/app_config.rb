@@ -10,7 +10,7 @@
 
 module Ezap::AppConfig
 
-  def  self.included base
+  def self.included base
     base.extend ClassMethods
     class << base
       attr_accessor :config_base_file_name
@@ -38,8 +38,13 @@ module Ezap::AppConfig
       class << k
         attr_accessor :_app_config
       end
+      infiltrate k, 2
+    end
+
+    def infiltrate k, n #;)
       k.app_config_search config_base_file_name
-      cfg_path = search_config catch_caller_file
+      cfg_path = search_config catch_caller_file(n)
+      return false unless cfg_path
       puts "loading ezap app-config from #{cfg_path}..."
       k.app_config.merge!(YAML.load_file(cfg_path).symbolize_keys_rec!)
     end

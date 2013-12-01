@@ -210,8 +210,8 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       print "|sending...";$stdout.flush
       @rep.send_obj(disp.key?(:reply) ? disp[:reply] : disp)
       puts "sent"
-      hook = disp[:after_response]
-      hook && send(hook)
+      hook = [disp[:after_response]].flatten.compact
+      !hook.empty? && send(*hook)
     rescue MessagePack::MalformedFormatError => e
       $stderr.puts "Error: could not decode request: #{e.message}";$stderr.flush
       @rep.send_string('rst')
@@ -282,7 +282,9 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     def local_shutdown_system
       #@pub.send()
     end
-    
+
+    #TODO: should this still be offered at all?
+=begin
     def assign_service_port rs
       range = @config[:opts][:sub_port_range] rescue nil
       raise "no port range defined but requested" unless range
@@ -295,7 +297,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       @assigned_ports << cur
       rs.set_port(cur)
     end
-
+=end
     def stop
       state!(:stopped)
       puts "stopping GM."
@@ -316,6 +318,13 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     #wait for availability
     def wait
       wait_for_gm
+    end
+    
+    def auto_ip_listen srv
+      client = srv.accept
+      client.write(client.remote_address.ip_address)
+      client.close
+      srv.close
     end
     
   end
@@ -344,6 +353,15 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
 
       def state
         {reply: GM.state}
+      end
+
+      #y, this is not zmq style, but i want to allow
+      #a useful "as-seen-by gm" auto-ip config on every service
+      #but this should at least never be hard-coded, should stay optional
+
+      def auto_ip
+        srv = TCPServer.new('0.0.0.0', 0)
+        {reply: srv.addr[1], after_response: [:auto_ip_listen, srv]}
       end
 
       def svc_reg opts
@@ -415,9 +433,10 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     def initialize opts
       @properties = opts
       @proto = opts[:proto] || 'tcp'
-      if @host = opts[:host]
-        GM.assign_service_port(self)
-      end
+      #if @host = opts[:host]
+      #  GM.assign_service_port(self)
+      #end
+      @address = opts[:address]
     end
 
     #TODO: fill
@@ -432,14 +451,14 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     end
 
     #TODO: probably wrong for other transports
-    def rebuild_address
-      @address = "#{@proto}://#{@host}:#{@port}"
-    end
+    #def rebuild_address
+    #  @address = "#{@proto}://#{@host}:#{@port}"
+    #end
 
-    def set_port p
-      @port = p
-      rebuild_address
-    end
+    #def set_port p
+    #  @port = p
+    #  rebuild_address
+    #end
   end
 
 end
