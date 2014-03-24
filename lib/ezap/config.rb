@@ -69,7 +69,7 @@ module Ezap
       else
         dump loc
       end
-      @@hsh[:config_files] = (lc ? lc : loc) => :merge}
+      @@hsh[:config_files] = {(lc ? lc : loc) => :merge}
     end
 
     #def dump_to loc=:home
