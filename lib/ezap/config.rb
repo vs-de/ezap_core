@@ -39,7 +39,7 @@ module Ezap
 
     #key order matters for loading: specific -> global
     CFG_PATHS = Hash.new{|h,k| k if !k.is_a?(Symbol)}.merge(
-      local: File.join('.', File.directory?('config') ? 'config' : '', CFG_FILE_NAME),
+      local: File.join(`pwd`.strip, File.directory?('config') ? 'config' : '', CFG_FILE_NAME),
       home: File.join(sys_home, ".#{CFG_FILE_NAME}"),
       gem: File.join(@@hsh[:gm_root], CFG_PATH, CFG_FILE_NAME),
       default: File.join(@@hsh[:gm_root], CFG_PATH, CFG_DEFAULT_FILE_NAME)
@@ -60,18 +60,23 @@ module Ezap
 
     #takes pathname-string or location name when symbol
     def store_init_config loc=:home
-      lc = CFG_PATHS[loc]
       #@@hsh[:config_files] ||= {lc => :merge}
-      @@hsh[:config_files] = {lc => :merge}
-      dump_to loc
+      lc = nil
+      if loc.is_a?(Symbol)
+        lc = CFG_PATHS[loc]
+        return nil unless lc
+        dump lc
+      else
+        dump loc
+      end
+      @@hsh[:config_files] = lc ? {lc => :merge} : {loc => :merge}
     end
 
-    def dump_to loc=:home
-      CFG_PATHS[loc].tap &->(p) {dump p}
-    end
+    #def dump_to loc=:home
+    #  CFG_PATHS[loc].tap &->(p) {dump p}
+    #end
 
     def dump fn
-      
       f = fn ? open(fn, 'w') : $stdout
       f.write(to_hash.tap(&->(h){h.delete(:config_files)}).stringify_keys_rec!.to_yaml)
       f.close
