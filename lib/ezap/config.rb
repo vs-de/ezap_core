@@ -65,11 +65,12 @@ module Ezap
       if loc.is_a?(Symbol)
         lc = CFG_PATHS[loc]
         return nil unless lc
-        dump lc
+        ret = dump lc
       else
-        dump loc
+        ret = dump loc
       end
       @@hsh[:config_files] = {(lc ? lc : loc) => :merge}
+      ret
     end
 
     #def dump_to loc=:home
