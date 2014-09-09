@@ -109,7 +109,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     end
     
     def service_info
-      services.map{|name, s| {name => s.address} if s}.compact
+      services.map{|name, s| {name => [s.address, s.remote_address]} if s}.compact
     end
     
     def bad_service_info
@@ -381,7 +381,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
         print "adding service: #{name}"
         new_rs = RemoteService.new(opts)
         GM.services[name] = new_rs
-        {reply: {service_number: GM.services.keys.size, address: new_rs.address}}
+        {reply: {service_number: GM.services.keys.size, address: new_rs.remote_address}}
       end
 
       def svc_unreg name
@@ -428,7 +428,8 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
   #TODO: that's just very roughly hacked here
   class RemoteService
     GM = Ezap::Service::GlobalMaster
-    attr_accessor :address, :properties
+    #remote address is address seen from service-adapter
+    attr_accessor :address, :properties, :remote_address
 
     def initialize opts
       @properties = opts
@@ -437,6 +438,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       #  GM.assign_service_port(self)
       #end
       @address = opts[:address]
+      @remote_address = opts[:remote_address] || @address
     end
 
     #TODO: fill

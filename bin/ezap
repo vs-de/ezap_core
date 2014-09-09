@@ -32,7 +32,7 @@ module EzapExec
     end
 
     def start_service name
-        puts "starting #{name} - no implemented"
+        puts "starting #{name} - not implemented"
     end
 
     def stop_service name
@@ -96,7 +96,7 @@ module EzapExec
         when 'dump'
           Ezap.config.dump args.shift
         else
-          $stderr.puts "config arg no recognized"
+          $stderr.puts "config arg not recognized"
       end
     end
 
@@ -139,7 +139,7 @@ usage:
   ezap (r)un <file/args to 'ruby'>
   ezap (e)val <ruby-expression>
   ezap (c)onsole
-  ezap config { store [local|gem|home] | load <file> | dump [file] }
+  ezap config { store [local|gem|home] | load <file> | dump [file] | apply <file>}
   ezap gm_ping(/gmp)
   ezap help
 
