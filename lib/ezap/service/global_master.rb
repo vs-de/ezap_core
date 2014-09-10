@@ -109,7 +109,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     end
     
     def service_info
-      services.map{|name, s| {name => [s.address, s.remote_address]} if s}.compact
+      services.map{|name, s| {name => [s.address, s.remote_address].uniq} if s}.compact
     end
     
     def bad_service_info
