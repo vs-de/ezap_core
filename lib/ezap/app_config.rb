@@ -41,7 +41,18 @@ module Ezap::AppConfig
       infiltrate k, 2
     end
 
-    def infiltrate k, n #;)
+    
+    def infiltrate k , notused=nil
+      k.app_config_search config_base_file_name
+      cfg_path = search_config Dir.pwd
+      return false unless cfg_path
+      puts "loading ezap app-config from #{cfg_path}..."
+      k.app_config.merge!(YAML.load_file(cfg_path).symbolize_keys_rec!)
+    end
+
+    #don't use that, experimental
+    def _infiltrate k, n #;)
+      #(1..9).each{|n| puts ""+n.to_s+": "+catch_caller_file(n)}
       k.app_config_search config_base_file_name
       cfg_path = search_config catch_caller_file(n)
       return false unless cfg_path

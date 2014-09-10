@@ -381,7 +381,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
         print "adding service: #{name}"
         new_rs = RemoteService.new(opts)
         GM.services[name] = new_rs
-        {reply: {service_number: GM.services.keys.size, address: new_rs.remote_address}}
+        {reply: {service_number: GM.services.keys.size, address: new_rs.address}}
       end
 
       def svc_unreg name
@@ -395,7 +395,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
         #puts "services: #{GM.services.inspect}"
         rs = GM.services[name]
         return {reply: {}} unless rs
-        {reply: {address: rs.address}}
+        {reply: {address: rs.remote_address}}
       end
 
       def gm_pub_addr
