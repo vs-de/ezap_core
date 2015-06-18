@@ -21,7 +21,53 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
   end
 
   class <<self
-    attr_accessor :state, :services, :bad_services
+    attr_accessor :state, :services, :bad_services, :service_groups
+  end
+
+  class ServiceGroup
+    @groups = {}
+    GM = Ezap::Service::GlobalMaster
+
+    def self.get name
+      @groups[name]
+    end
+
+    def self.create name
+      GM.service_groups[name] = {}
+      @groups[name] = new(name)
+    end
+
+    def initialize name, strategy: CircleStrategy
+      @name = name
+      @grp = GM.service_groups[@name]
+      @keys = @grp.keys
+      @size = @keys.size
+      singleton_class.send(:include, strategy)
+    end
+
+    def add num, rs
+      @grp[num] = rs
+      @keys = @grp.keys
+      @size = @keys.size
+    end
+
+    def del num
+      @grp.delete(num)
+      @keys = @grp.keys
+      @size = @keys.size
+    end
+
+    def get num
+      @grp[num]
+    end
+
+    #most simple strategy for now...
+    module CircleStrategy
+      def next
+        @last_k = (@last_k ||= 0).succ % @size
+        @grp[@keys[@last_k]]
+      end
+    end
   end
 
   PID_FILE = File.join(Ezap.config.gm_root, 'var', 'pids', 'global_master.pid')
@@ -36,6 +82,7 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
 
   #we use ||= and not = here to allow re-reading the source file
   @services ||= {}
+  @service_groups ||= {}
   @bad_services ||= {}
   
   #States: 
@@ -109,7 +156,14 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     end
     
     def service_info
-      services.map{|name, s| {name => [s.address, s.remote_address].uniq} if s}.compact
+      {
+        services: services.map{|name, s| {name => [s.address, s.remote_address].uniq} if s}.compact,
+        groups: service_groups.inject({}) do |h,a|
+          name, grp = a; 
+          h[name] = grp.inject({}){|h,a|n,s = a; s ? h.merge(n => [s.address, s.remote_address].uniq) : h}
+          h
+        end
+      }
     end
     
     def bad_service_info
@@ -151,7 +205,6 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     include RemoteMethods
 
     def daemonize
-      #warning?
       #raise "Error: pidfile already exists!"
       if File.exists?(PID_FILE)
         f = File.open(PID_FILE, 'r')
@@ -299,8 +352,8 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
     end
 =end
     def stop
-      state!(:stopped)
       puts "stopping GM."
+      state!(:stopped)
       close_sockets
       puts "sockets closed."
       close_log
@@ -370,30 +423,57 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
         unless name
           return {error: "service requires at least a name"}
         end
-        if (rs = GM.services[name])
+        if o = name =~ /_[0-9]+$/
+          is_group = true
+          base_name = name[0...o]
+          num = name[o.succ..-1].to_i
+          grp = GM::ServiceGroup.get(base_name)
+          grp ||= GM::ServiceGroup.create(base_name)
+          rs = grp.get(num)
+        else
+          is_group = false
+          rs = GM.services[name]
+        end
+        if (rs)
           if rs.healthy?
             return {error: "service with name '#{name}' already registered and healthy"}
           else
             print 're- ' #;)
-            (GM.bad_services[name] ||= []) << GM.services.delete(name)
+            (GM.bad_services[name] ||= []) << (is_group ? grp.del(num) : GM.services.delete(name))
           end
         end
-        print "adding service: #{name}"
         new_rs = RemoteService.new(opts)
-        GM.services[name] = new_rs
+        if is_group
+          print "adding service #{num} to group #{base_name}"
+          grp.add num, new_rs
+        else 
+          print "adding service: #{name}"
+          GM.services[name] = new_rs
+        end
         {reply: {service_number: GM.services.keys.size, address: new_rs.address}}
       end
 
       def svc_unreg name
-        puts "removing service: #{name}"
-        GM.services[name] = nil
+        if o = name =~ /_[0-9]+$/
+          base_name = name[0...o]
+          num = name[o.succ..-1].to_i
+          puts "removing service #{num} from group #{base_name}"
+          GM::ServiceGroup.get(base_name).del(num)
+        else
+          puts "removing service: #{name}"
+          GM.services[name] = nil
+        end
         {reply: :ack}
       end
 
       def locate_service name
-        print "addr request for #{name.inspect}"
-        #puts "services: #{GM.services.inspect}"
-        rs = GM.services[name]
+        print "addr request for #{name}"
+        if grp = GM::ServiceGroup.get(name)
+          rs = grp.next
+          print " | grp-dlg -> #{rs.name}"
+        else
+          rs = GM.services[name]
+        end
         return {reply: {}} unless rs
         {reply: {address: rs.remote_address}}
       end
@@ -450,6 +530,10 @@ class Ezap::Service::GlobalMaster < Ezap::Service::Master
       sock = Ezap::Sock.new(:req)
       sock.connect self.address
       sock.ping
+    end
+
+    def name
+      @properties[:name]
     end
 
     #TODO: probably wrong for other transports
